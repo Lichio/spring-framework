@@ -515,22 +515,30 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			// 准备refresh，开始时间及一些标志位的设置
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			// 用于读取Spring XML配置文件**
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			// 设置容器beanFactory的各种成员属性，比如beanClassLoader，beanPostProcessors。
+			// 这里的beanPostProcessor是系统默认的，不是用户自定义的。
+			// 比如负责注入ApplicationContext引用到各种Aware中的ApplicationContextAwareProcessor容器后处理器。
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				// 调用默认的*容器后处理器*，如ServletContextAwareProcessor
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				// 按顺序 实例化并调用所有已注册的*容器后处理器*
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 按顺序 实例化并注册所有的*Bean后处理器*
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -540,15 +548,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				// 模板方法 用于在子类中做一些特殊的初始化工作
 				onRefresh();
 
 				// Check for listener beans and register them.
+				// 注册事件监听器，也就是所有实现了ApplicationListener的类。
+				// 会将监听器加入到事件广播器ApplicationEventMulticaster中，所以在广播时就可以发送消息给所有监听器了。
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// 初始化所有剩下的singleton bean(没有标注lazy-init)
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				// 完成refresh，调用LifecycleProcessor的onRefresh()方法发布ContextRefreshedEvent事件
 				finishRefresh();
 			}
 
